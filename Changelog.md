@@ -1,3 +1,13 @@
+## 1.3.0 (July 9, 2012)
+
+Notes:
+
+  - Added support for Brightbox deployment
+  - Change name of ec2.yml to cloud.yml
+  - Major change to cloud.yml to reflect Brightbox change
+  - Defaults to ec2 usage, still
+  - Updated Readme
+
 ## 1.2.9 (June 29, 2012)
 
 Bugfixes:

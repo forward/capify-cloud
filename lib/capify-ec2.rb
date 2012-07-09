@@ -9,37 +9,50 @@ class CapifyEc2
   attr_accessor :load_balancer, :instances
   SLEEP_COUNT = 5
   
-  def initialize(ec2_config = "config/ec2.yml")
-    case ec2_config
+  def initialize(cloud_config = "config/cloud.yml")
+    case cloud_config
     when Hash
-      @ec2_config = ec2_config
+      @cloud_config = cloud_config
     when String
-      @ec2_config = YAML.load_file ec2_config
+      @cloud_config = YAML.load_file cloud_config
     else
-      raise ArgumentError, "Invalid ec2_config: #{ec2_config.inspect}"
+      raise ArgumentError, "Invalid cloud_config: #{cloud_config.inspect}"
     end
 
-    regions = determine_regions()
+    @cloud_providers = @cloud_config[:cloud_providers]
     
     @instances = []
-    regions.each do |region|
-      servers = Fog::Compute.new(:provider => 'AWS', :aws_access_key_id => @ec2_config[:aws_access_key_id], 
-        :aws_secret_access_key => @ec2_config[:aws_secret_access_key], :region => region).servers
-      servers.each do |server|
-        @instances << server if server.ready?
+    @cloud_providers.each do |cloud_provider|
+      config = @cloud_config[cloud_provider.to_sym]
+      case cloud_provider
+      when 'Brightbox'
+        servers = Fog::Compute.new(:provider => cloud_provider, :brightbox_client_id => config[:brightbox_client_id],
+          :brightbox_secret => config[:brightbox_secret]).servers
+        servers.each do |server|
+          @instances << server if server.ready?
+        end
+      else
+        regions = determine_regions(cloud_provider)
+        regions.each do |region|
+          servers = Fog::Compute.new(:provider => cloud_provider, :aws_access_key_id => config[:aws_access_key_id], 
+            :aws_secret_access_key => config[:aws_secret_access_key], :region => region).servers
+          servers.each do |server|
+            @instances << server if server.ready?
+          end
+        end
       end
     end
   end 
   
-  def determine_regions()
-    @ec2_config[:aws_params][:regions] || [@ec2_config[:aws_params][:region]]
+  def determine_regions(cloud_provider = 'AWS')
+    @cloud_config[cloud_provider.to_sym][:params][:regions] || [@cloud_config[cloud_provider.to_sym][:params][:region]]
   end
     
   def display_instances
     desired_instances.each_with_index do |instance, i|
       puts sprintf "%02d:  %-40s  %-20s  %-20s  %-62s  %-20s  (%s)  (%s)",
         i, (instance.name || "").green, instance.id.red, instance.flavor_id.cyan,
-        instance.contact_point.blue, instance.availability_zone.magenta, (instance.tags["Roles"] || "").yellow,
+        instance.contact_point.blue, instance.zone_id.magenta, (instance.tags["Roles"] || "").yellow,
         (instance.tags["Options"] || "").yellow
       end
   end
@@ -49,11 +62,11 @@ class CapifyEc2
   end
     
   def project_instances
-    @instances.select {|instance| instance.tags["Project"] == @ec2_config[:project_tag]}
+    @instances.select {|instance| instance.tags["Project"] == @cloud_config[:project_tag]}
   end
   
-  def desired_instances(region = nil)
-    @ec2_config[:project_tag].nil? ? @instances : project_instances
+  def desired_instances
+    @cloud_config[:project_tag].nil? ? @instances : project_instances
   end
  
   def get_instances_by_role(role)
@@ -74,7 +87,7 @@ class CapifyEc2
   end
     
   def elb
-    Fog::AWS::ELB.new(:aws_access_key_id => @ec2_config[:aws_access_key_id], :aws_secret_access_key => @ec2_config[:aws_secret_access_key], :region => @ec2_config[:aws_params][:region])
+    Fog::AWS::ELB.new(:aws_access_key_id => @cloud_config[:aws_access_key_id], :aws_secret_access_key => @cloud_config[:aws_secret_access_key], :region => @cloud_config[:aws_params][:region])
   end 
   
   def get_load_balancer_by_instance(instance_id)
@@ -95,7 +108,7 @@ class CapifyEc2
   end
      
   def deregister_instance_from_elb(instance_name)
-    return unless @ec2_config[:load_balanced]
+    return unless @cloud_config[:load_balanced]
     instance = get_instance_by_name(instance_name)
     return if instance.nil?
     @@load_balancer = get_load_balancer_by_instance(instance.id)
@@ -105,7 +118,7 @@ class CapifyEc2
   end
   
   def register_instance_in_elb(instance_name, load_balancer_name = '')
-    return if !@ec2_config[:load_balanced]
+    return if !@cloud_config[:load_balanced]
     instance = get_instance_by_name(instance_name)
     return if instance.nil?
     load_balancer =  get_load_balancer_by_name(load_balancer_name) || @@load_balancer
@@ -113,7 +126,7 @@ class CapifyEc2
 
     elb.register_instances_with_load_balancer(instance.id, load_balancer.id)
 
-    fail_after = @ec2_config[:fail_after] || 30
+    fail_after = @cloud_config[:fail_after] || 30
     state = instance_health(load_balancer, instance)
     time_elapsed = 0
     

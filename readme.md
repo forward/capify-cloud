@@ -64,7 +64,7 @@ end
 Running
 
 ```ruby
-cap web ec2:date
+cap web cloud:date
 ```
 
 will run the date command on all server's tagged with the web role
@@ -72,7 +72,7 @@ will run the date command on all server's tagged with the web role
 Running
 
 ```ruby
-cap server-1 ec2:register_instance -s loadbalancer=elb-1
+cap server-1 cloud:register_instance -s loadbalancer=elb-1
 ```
 
 will register server-1 to be used by elb-1
@@ -80,7 +80,7 @@ will register server-1 to be used by elb-1
 Running
 
 ```ruby
-cap server-1 ec2:deregister_instance
+cap server-1 cloud:deregister_instance
 ```
 
 will remove server-1 from whatever instance it is currently
@@ -89,7 +89,7 @@ registered against.
 Running
 
 ```ruby
-cap ec2:status
+cap cloud:status
 ```
 
 will list the currently running servers and their associated details
@@ -98,11 +98,11 @@ will list the currently running servers and their associated details
 Running
 
 ```ruby
-cap ec2:ssh #
+cap cloud:ssh #
 ```
 
 will launch ssh using the user and port specified in your configuration.
-The # argument is the index of the server to ssh into. Use the 'ec2:status'
+The # argument is the index of the server to ssh into. Use the 'cloud:status'
 command to see the list of servers with their indices.
 
 More options

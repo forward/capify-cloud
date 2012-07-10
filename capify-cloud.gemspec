@@ -4,7 +4,7 @@ require "capify-cloud/version"
 
 Gem::Specification.new do |s|
   s.name        = "capify-cloud"
-  s.version     = Capify::Ec2::VERSION
+  s.version     = Capify::Cloud::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Noah Cantor", "Siddharth Dawara"]
   s.email       = ["noah.cantor@forward.co.uk", "siddharth.dawara@forward.co.uk"]

@@ -1,12 +1,13 @@
 Capify Cloud
 ====================================================
 
-capify-cloud is used to generate capistrano namespaces using ec2 tags and a hack with Brightbox groups (in development).
+capify-cloud is used to generate capistrano namespaces using ec2 tags and a hack with Brightbox server-groups to emulate tags.
+Tags are simulated on Brightbox using a server_group containing a ":" (e.g. Roles:web)
 
-eg: If you have three servers on amazon's ec2.
+eg: If you have 2 servers on amazon's ec2 and a DB server at Brightbox
 
     server-1 Tag: Roles => "web", Options => "cron,resque, db"
-    server-2 Tag: Roles => "db"
+    server-2 Server-Group: Roles:db
     server-3 Tag: Roles => "web,db, app"
 
 Installing
@@ -48,7 +49,7 @@ Will generate
 
 ```ruby
 task :server-2 do
-  role :db, {server-2 public dns fetched from Amazon}
+  role :db, {server-2 public or private IP, fetched from Brightbox}
 end
 
 task :server-3 do
@@ -56,7 +57,7 @@ task :server-3 do
 end
 
 task :db do
-  role :db, {server-2 public dns fetched from Amazon}
+  role :db, {server-2 public or private IP, fetched from Brightbox}
   role :db, {server-3 public dns fetched from Amazon}
 end
 ```
@@ -152,21 +153,30 @@ cloud_roles :name=>:app, :options=>{ :default => true }
 
 would be the equivalent of 'cap app web deploy'
 
-Ec2 config
+Cloud config
 ====================================================
 
 This gem requires 'config/cloud.yml' in your project.
 The yml file needs to look something like this:
-
+  
 ```ruby
-:aws_access_key_id: "YOUR ACCESS KEY"
-:aws_secret_access_key: "YOUR SECRET"
-:aws_params:
-  :region: 'eu-west-1'
-:load_balanced: true
-:project_tag: "YOUR APP NAME"
+:cloud_providers: ['AWS', 'Brightbox']
+
+:AWS:
+  :aws_access_key_id: "YOUR ACCESS KEY"
+  :aws_secret_access_key: "YOUR SECRET"
+  :params:
+    :region: 'eu-west-1'
+  :load_balanced: true
+  :project_tag: "YOUR APP NAME"
+  
+:Brightbox:
+  :brightbox_client_id: "YOUR CLIENT ID"
+  :brightbox_secret: "YOUR SECRET"
 ```
-aws_access_key_id, aws_secret_access_key, and region are required. Other settings are optional.
+aws_access_key_id, aws_secret_access_key, and region are required for AWS. Other settings are optional.
+brightbox_client_id and brightbox_secret: are required for Brightbox.
+If you do not specify a cloud_provider, AWS is assumed.
 
 If :load_balanced is set to true, the gem uses pre and post-deploy
 hooks to deregister the instance, reregister it, and validate its
@@ -179,8 +189,8 @@ running against those instances with a "Project" tag set to the value
 
 ## Development
 
-Source hosted at [GitHub](http://github.com/forward/capify-cloud).
-Report Issues/Feature requests on [GitHub Issues](http://github.com/forward/capify-cloud/issues).
+Source hosted at [GitHub](http://github.com/ncantor/capify-cloud).
+Report Issues/Feature requests on [GitHub Issues](http://github.com/ncantor/capify-cloud/issues).
 
 ### Note on Patches/Pull Requests
 
@@ -194,4 +204,4 @@ Report Issues/Feature requests on [GitHub Issues](http://github.com/forward/capi
 
 ## Copyright
 
-Copyright (c) 2012 Forward. See [LICENSE](https://github.com/forward/capify-cloud/blob/master/LICENSE) for details.
+Original version: Copyright (c) 2012 Forward. See [LICENSE](https://github.com/ncantor/capify-cloud/blob/master/LICENSE) for details.

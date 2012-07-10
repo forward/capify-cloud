@@ -7,7 +7,7 @@ module Fog
     class AWS
       class Server
         def contact_point
-          dns_name || public_ip_address || private_ip_address
+          public_ip_address || private_ip_address
         end
         
         def name
@@ -16,6 +16,10 @@ module Fog
         
         def zone_id
           availability_zone
+        end
+        
+        def provider
+          'AWS'
         end
       end
     end
@@ -26,7 +30,17 @@ module Fog
         end
         
         def tags
-          {}
+          tags = server_groups.map {|server_group| server_group["name"]}.select{|tag| tag.include?(":")}
+          tags_hash = tags.inject({}) do |map, individual|
+            key, value = individual.split(":")
+            map[key] = value
+            map
+          end
+          tags_hash
+        end
+        
+        def provider
+          'Brightbox'
         end
       end
     end

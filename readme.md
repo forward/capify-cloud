@@ -1,7 +1,7 @@
-Capify Ec2
+Capify Cloud
 ====================================================
 
-capify-ec2 is used to generate capistrano namespaces using ec2 tags.
+capify-cloud is used to generate capistrano namespaces using ec2 tags and a hack with Brightbox groups (in development).
 
 eg: If you have three servers on amazon's ec2.
 
@@ -11,13 +11,13 @@ eg: If you have three servers on amazon's ec2.
 
 Installing
 
-    gem install capify-ec2
+    gem install capify-cloud
 
 In your deploy.rb:
 
 ```ruby
-require "capify-ec2/capistrano"
-ec2_roles :web
+require "capify-cloud/capistrano"
+cloud_roles :web
 ```
 
 Will generate
@@ -40,8 +40,8 @@ end
 Additionally
 
 ```ruby
-require "capify-ec2/capistrano"
-ec2_roles :db
+require "capify-cloud/capistrano"
+cloud_roles :db
 ```
 
 Will generate
@@ -112,7 +112,7 @@ In addition to specifying options (e.g. 'cron') at the server level, it is also 
 Use with caution! This does not work with autoscaling.
 
 ```ruby
-ec2_roles {:name=>"web", :options=>{:cron=>"server-1"}}
+cloud_roles {:name=>"web", :options=>{:cron=>"server-1"}}
 ```
 
 Will generate
@@ -139,15 +139,15 @@ task :update_cron => :web, :only=>{:cron} do
   Do something to a server with cron on it
 end
 
-ec2_roles :name=>:web, :options=>{ :default => true }
+cloud_roles :name=>:web, :options=>{ :default => true }
 ```
 
 Will make :web the default role so you can just type 'cap deploy'.
 Multiple roles can be defaults so:
 
 ```ruby
-ec2_roles :name=>:web, :options=>{ :default => true }
-ec2_roles :name=>:app, :options=>{ :default => true }
+cloud_roles :name=>:web, :options=>{ :default => true }
+cloud_roles :name=>:app, :options=>{ :default => true }
 ```
 
 would be the equivalent of 'cap app web deploy'
@@ -155,7 +155,7 @@ would be the equivalent of 'cap app web deploy'
 Ec2 config
 ====================================================
 
-This gem requires 'config/ec2.yml' in your project.
+This gem requires 'config/cloud.yml' in your project.
 The yml file needs to look something like this:
 
 ```ruby
@@ -179,8 +179,8 @@ running against those instances with a "Project" tag set to the value
 
 ## Development
 
-Source hosted at [GitHub](http://github.com/forward/capify-ec2).
-Report Issues/Feature requests on [GitHub Issues](http://github.com/forward/capify-ec2/issues).
+Source hosted at [GitHub](http://github.com/forward/capify-cloud).
+Report Issues/Feature requests on [GitHub Issues](http://github.com/forward/capify-cloud/issues).
 
 ### Note on Patches/Pull Requests
 
@@ -194,4 +194,4 @@ Report Issues/Feature requests on [GitHub Issues](http://github.com/forward/capi
 
 ## Copyright
 
-Copyright (c) 2012 Forward. See [LICENSE](https://github.com/forward/capify-ec2/blob/master/LICENSE) for details.
+Copyright (c) 2012 Forward. See [LICENSE](https://github.com/forward/capify-cloud/blob/master/LICENSE) for details.

@@ -1,10 +1,10 @@
 require 'rubygems'
 require 'fog'
 require 'colored'
-require File.expand_path(File.dirname(__FILE__) + '/capify-ec2/server')
+require File.expand_path(File.dirname(__FILE__) + '/capify-cloud/server')
 
 
-class CapifyEc2
+class CapifyCloud
 
   attr_accessor :load_balancer, :instances
   SLEEP_COUNT = 5
@@ -50,8 +50,8 @@ class CapifyEc2
     
   def display_instances
     desired_instances.each_with_index do |instance, i|
-      puts sprintf "%02d:  %-40s  %-20s  %-20s  %-62s  %-20s  (%s)  (%s)",
-        i, (instance.name || "").green, instance.id.red, instance.flavor_id.cyan,
+      puts sprintf "%02d:  %-40s  %-20s %-20s  %-20s  %-25s  %-20s  (%s)  (%s)",
+        i, (instance.name || "").green, instance.provider.yellow, instance.id.red, instance.flavor_id.cyan,
         instance.contact_point.blue, instance.zone_id.magenta, (instance.tags["Roles"] || "").yellow,
         (instance.tags["Options"] || "").yellow
       end

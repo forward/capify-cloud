@@ -1,4 +1,4 @@
-## 1.3.0 (July 9, 2012)
+## 1.5.0 (July 9, 2012)
 
 Notes:
 
@@ -6,6 +6,9 @@ Notes:
   - Change name of ec2.yml to cloud.yml
   - Major change to cloud.yml to reflect Brightbox change
   - Defaults to ec2 usage, still
+  - Don't display DNS name, only IP address, when running ec2:status
+  - Added Cloud Provider to ec2:status
+  - Added tags capability to Brightbox. Uses hack in Groups which contain a ":"
   - Updated Readme
 
 ## 1.2.9 (June 29, 2012)

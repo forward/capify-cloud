@@ -6,9 +6,9 @@ Gem::Specification.new do |s|
   s.name        = "capify-cloud"
   s.version     = Capify::Cloud::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Noah Cantor", "Siddharth Dawara"]
-  s.email       = ["noah.cantor@forward.co.uk", "siddharth.dawara@forward.co.uk"]
-  s.homepage    = "http://github.com/forward/capify-cloud"
+  s.authors     = ["Noah Cantor"]
+  s.email       = ["ncantor@gmail.com"]
+  s.homepage    = "http://github.com/ncantor/capify-cloud"
   s.summary     = %q{Grabs roles from clouds' meta-data and autogenerates capistrano tasks}
   s.description = %q{Grabs roles from clouds' meta-data and autogenerates capistrano tasks}
 

@@ -161,6 +161,7 @@ The yml file needs to look something like this:
   
 ```ruby
 :cloud_providers: ['AWS', 'Brightbox']
+:project_tag: "YOUR APP NAME"
 
 :AWS:
   :aws_access_key_id: "YOUR ACCESS KEY"
@@ -168,7 +169,6 @@ The yml file needs to look something like this:
   :params:
     :region: 'eu-west-1'
   :load_balanced: true
-  :project_tag: "YOUR APP NAME"
   
 :Brightbox:
   :brightbox_client_id: "YOUR CLIENT ID"

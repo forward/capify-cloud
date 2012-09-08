@@ -172,13 +172,11 @@ The :require and :exclude parameters work on Amazon EC2 instance metadata.
 AWS instances have top level metadata and user defined tag data, and this data can be used by your loadbalancer rule
  to include or exclude certain instances from the instance set.
 
-Take the :require keyword; Lets say  we only want to deploy to AWS instances which are in the 'running' state. To do that:
+Take the :require keyword; Lets say  we only want to register AWS instances which are in the 'running' state. To do that:
 
     loadbalancer :lb_appserver, :app, :require => { :state => "running" }
 
-The server set defined here for role :app are all instances in the loadbalancer 'lb_appserver' with state set to 'running'.
-
-Perhaps you have added tags to your instances, if so, you might want to deploy to only the instances meeting a specific tag value:
+Perhaps you have added tags to your instances, if so, you might want to register only the instances meeting a specific tag value:
 
     loadbalancer :lb_appserver, :app, :require => { :state => "running", :tags => {'fleet_color' => "green", 'tier' => 'free'} }
 

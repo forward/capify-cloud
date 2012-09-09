@@ -161,9 +161,11 @@ In order to define your instance sets associated with your load balancer, you mu
 For example, in deploy.rb, you would enter the load balancer name (e.g. 'lb_webserver'), the capistrano role associated with that load balancer (.e.g. 'web'),
 and any optional params.
 
-    loadbalancer :lb_webserver, :web
-    loadbalancer :lb_appserver, :app
-    loadbalancer :lb_dbserver, :db, :port => 22000
+```ruby
+loadbalancer :lb_webserver, :web
+loadbalancer :lb_appserver, :app
+loadbalancer :lb_dbserver, :db, :port => 22000
+```
 
 There are three special optional parameters you can add, `:require`, `:exclude` and `:deregister` . These allow you to register instances associated with your named load balancer, if they meet or fail to meet your `:require`/`:exclude` specifications. If `:deregister` is set to true, the gem uses pre-deploy hook "cloud:deregister_instances" to deregister the instances before deploy.
 
@@ -174,24 +176,33 @@ AWS instances have top level metadata and user defined tag data, and this data c
 
 Take the :require keyword; Lets say  we only want to register AWS instances which are in the 'running' state. To do that:
 
-    loadbalancer :lb_appserver, :app, :require => { :state => "running" }
+```ruby
+loadbalancer :lb_appserver, :app, :require => { :state => "running" }
+```
 
 Perhaps you have added tags to your instances, if so, you might want to register only the instances meeting a specific tag value:
 
-    loadbalancer :lb_appserver, :app, :require => { :state => "running", :tags => {'fleet_color' => "green", 'tier' => 'free'} }
+```ruby
+loadbalancer :lb_appserver, :app, :require => { :state => "running", :tags => {'fleet_color' => "green", 'tier' => 'free'} }
+```
 
 Or if you want deregister instances for role :app and specific tag during deployment:
 
-    loadbalancer :lb_appserver, :app, :deregister => true, :require => { :tags => {'master' => 'true'} }
-
+```ruby
+loadbalancer :lb_appserver, :app, :deregister => true, :require => { :tags => {'master' => 'true'} }
+```
 
 Now consider the :exclude keyword; Lets say we want to exclude from load balancer AWS instances which are 'micro' sized. To do that:
   
-    loadbalancer :lb_appserver, :app, :exclude => { :instance_type => "t1.micro"  }
+```ruby
+loadbalancer :lb_appserver, :app, :exclude => { :instance_type => "t1.micro"  }
+```
 
 You can exclude instances that have certain tags:
 
-    loadbalancer :lb_appserver, :app, :exclude => { :instance_type => "t1.micro", :tags => {'state' => 'dontdeploy' }  }
+```ruby
+loadbalancer :lb_appserver, :app, :exclude => { :instance_type => "t1.micro", :tags => {'state' => 'dontdeploy' }  }
+```
 
 NOTE: `:exclude` won't deregester instances manually registered or registered during previous deployments
 

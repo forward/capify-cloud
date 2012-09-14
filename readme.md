@@ -153,7 +153,7 @@ cloud_roles :name=>:app, :options=>{ :default => true }
 
 would be the equivalent of 'cap app web deploy'
 
-You also can use  `:require` and `:exclude` parameters:
+You also can use  `:require` and `:exclude` parameters to include or exclude instances from roles:
 
  ```ruby
 cloud_roles :name=>:web, :options=>{ :default => true }, :require => { :state => "running",  :tags => {'new' => "yes"}}

@@ -79,11 +79,17 @@ Capistrano::Configuration.instance(:must_exist).load do
     roles.each {|role| cloud_role(role)}
   end
   
-  def cloud_role(role_name_or_hash)
+  def cloud_role(role_name_or_hash, *args)
     role = role_name_or_hash.is_a?(Hash) ? role_name_or_hash : {:name => role_name_or_hash,:options => {}}
+    role[:options] ||= {}
     @roles[role[:name]]
-    
+
     instances = capify_cloud.get_instances_by_role(role[:name])
+
+    # Filter instances if :require or :exclude parameters are given
+    instances.delete_if { |i| ! @capify_cloud.all_args_within_instance(i, role[:require]) }  unless role[:require].nil? or role[:require].empty?
+    instances.delete_if { |i|   @capify_cloud.any_args_within_instance(i, role[:exclude]) }  unless role[:exclude].nil? or role[:exclude].empty?
+
     if role[:options].delete(:default)
       instances.each do |instance|
         define_role(role, instance)

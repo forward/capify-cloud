@@ -153,6 +153,15 @@ cloud_roles :name=>:app, :options=>{ :default => true }
 
 would be the equivalent of 'cap app web deploy'
 
+You also can use  `:require` and `:exclude` parameters:
+
+ ```ruby
+cloud_roles :name=>:web, :options=>{ :default => true }, :require => { :state => "running",  :tags => {'new' => "yes"}}
+cloud_roles :name=>:app, :exclude => { :instance_type => "t1.micro", :tags => {'new' => "no"}  }
+```
+
+See `Load balancing (AWS)` below for more details.
+
 Load balancing (AWS)
 ====================================================
 

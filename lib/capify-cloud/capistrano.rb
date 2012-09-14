@@ -16,14 +16,24 @@ Capistrano::Configuration.instance(:must_exist).load do
     desc "Deregisters instance from its ELB"
     task :deregister_instance do
       instance_name = variables[:logger].instance_variable_get("@options")[:actions].first
-      capify_cloud.deregister_instance_from_elb(instance_name)
+      capify_cloud.deregister_instance_from_elbs_hook(instance_name)
     end
 
     desc "Registers an instance with an ELB."
     task :register_instance do
       instance_name = variables[:logger].instance_variable_get("@options")[:actions].first
       load_balancer_name = variables[:logger].instance_variable_get("@options")[:vars][:loadbalancer]
-      capify_cloud.register_instance_in_elb(instance_name, load_balancer_name)
+      capify_cloud.register_instance_in_elb_hook(instance_name, load_balancer_name)
+    end
+
+    desc "Registers an instances with an ELB."
+    task :register_instances do
+      capify_cloud.register_instances_in_elb_hook
+    end
+
+    desc "Deregisters an instances with an ELB."
+    task :deregister_instances do
+      capify_cloud.deregister_instances_from_elb_hook
     end
 
     task :date do
@@ -47,9 +57,9 @@ Capistrano::Configuration.instance(:must_exist).load do
   end
   
   namespace :deploy do
-    before "deploy", "cloud:deregister_instance"
-    after "deploy", "cloud:register_instance"
-    after "deploy:rollback", "cloud:register_instance"
+    before "deploy", "cloud:deregister_instances"
+    after "deploy", "cloud:register_instances"
+    after "deploy:rollback", "cloud:register_instances"
   end
     
   def cloud_roles(*roles)
@@ -69,11 +79,17 @@ Capistrano::Configuration.instance(:must_exist).load do
     roles.each {|role| cloud_role(role)}
   end
   
-  def cloud_role(role_name_or_hash)
+  def cloud_role(role_name_or_hash, *args)
     role = role_name_or_hash.is_a?(Hash) ? role_name_or_hash : {:name => role_name_or_hash,:options => {}}
+    role[:options] ||= {}
     @roles[role[:name]]
-    
+
     instances = capify_cloud.get_instances_by_role(role[:name])
+
+    # Filter instances if :require or :exclude parameters are given
+    instances.delete_if { |i| ! @capify_cloud.all_args_within_instance(i, role[:require]) }  unless role[:require].nil? or role[:require].empty?
+    instances.delete_if { |i|   @capify_cloud.any_args_within_instance(i, role[:exclude]) }  unless role[:exclude].nil? or role[:exclude].empty?
+
     if role[:options].delete(:default)
       instances.each do |instance|
         define_role(role, instance)
@@ -133,6 +149,10 @@ Capistrano::Configuration.instance(:must_exist).load do
       role role[:name].to_sym, instance.contact_point
     end
   end
+
+  def loadbalancer (named_load_balancer, *args)
+    capify_cloud.loadbalancer(@roles, named_load_balancer, *args)
+  end  
   
   def numeric?(object)
     true if Float(object) rescue false

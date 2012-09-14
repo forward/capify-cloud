@@ -153,6 +153,70 @@ cloud_roles :name=>:app, :options=>{ :default => true }
 
 would be the equivalent of 'cap app web deploy'
 
+You also can use  `:require` and `:exclude` parameters to include or exclude instances from roles:
+
+ ```ruby
+cloud_roles :name=>:web, :options=>{ :default => true }, :require => { :state => "running",  :tags => {'new' => "yes"}}
+cloud_roles :name=>:app, :exclude => { :instance_type => "t1.micro", :tags => {'new' => "no"}  }
+```
+
+See `Load balancing (AWS)` below for more details.
+
+Load balancing (AWS)
+====================================================
+
+`loadbalancer` configuration allow you to automatically register instances to specified load balancer. There's post-deploy hook `cloud:register_instances` which will register your instances after deploy.
+In order to define your instance sets associated with your load balancer, you must specify the load balancer name, the associated roles for that load balancer and any optional params:
+For example, in deploy.rb, you would enter the load balancer name (e.g. 'lb_webserver'), the capistrano role associated with that load balancer (.e.g. 'web'),
+and any optional params.
+
+```ruby
+loadbalancer :lb_webserver, :web
+loadbalancer :lb_appserver, :app
+loadbalancer :lb_dbserver, :db, :port => 22000
+```
+
+There are three special optional parameters you can add, `:require`, `:exclude` and `:deregister` . These allow you to register instances associated with your named load balancer, if they meet or fail to meet your `:require`/`:exclude` specifications. If `:deregister` is set to true, the gem uses pre-deploy hook "cloud:deregister_instances" to deregister the instances before deploy.
+
+The :require and :exclude parameters work on Amazon EC2 instance metadata.
+
+AWS instances have top level metadata and user defined tag data, and this data can be used by your loadbalancer rule
+ to include or exclude certain instances from the instance set.
+
+Take the :require keyword; Lets say  we only want to register AWS instances which are in the 'running' state. To do that:
+
+```ruby
+loadbalancer :lb_appserver, :app, :require => { :state => "running" }
+```
+
+Perhaps you have added tags to your instances, if so, you might want to register only the instances meeting a specific tag value:
+
+```ruby
+loadbalancer :lb_appserver, :app, :require => { :state => "running", :tags => {'fleet_color' => "green", 'tier' => 'free'} }
+```
+
+Or if you want deregister instances for role :app and specific tag during deployment:
+
+```ruby
+loadbalancer :lb_appserver, :app, :deregister => true, :require => { :tags => {'master' => 'true'} }
+```
+
+Now consider the :exclude keyword; Lets say we want to exclude from load balancer AWS instances which are 'micro' sized. To do that:
+  
+```ruby
+loadbalancer :lb_appserver, :app, :exclude => { :instance_type => "t1.micro"  }
+```
+
+You can exclude instances that have certain tags:
+
+```ruby
+loadbalancer :lb_appserver, :app, :exclude => { :instance_type => "t1.micro", :tags => {'state' => 'dontdeploy' }  }
+```
+
+NOTE: `:exclude` won't deregester instances manually registered or registered during previous deployments
+
+Some code ported from [cap-elb](https://github.com/danmiley/cap-elb)
+
 Cloud config
 ====================================================
 
@@ -167,7 +231,6 @@ The yml file needs to look something like this:
   :aws_secret_access_key: "YOUR SECRET"
   :params:
     :region: 'eu-west-1'
-  :load_balanced: true
   :project_tag: "YOUR APP NAME"
   
 :Brightbox:
@@ -177,11 +240,6 @@ The yml file needs to look something like this:
 aws_access_key_id, aws_secret_access_key, and region are required for AWS. Other settings are optional.
 brightbox_client_id and brightbox_secret: are required for Brightbox.
 If you do not specify a cloud_provider, AWS is assumed.
-
-If :load_balanced is set to true, the gem uses pre and post-deploy
-hooks to deregister the instance, reregister it, and validate its
-health.
-:load_balanced only works for individual instances, not for roles.
 
 The :project_tag parameter is optional. It will limit any commands to
 running against those instances with a "Project" tag set to the value

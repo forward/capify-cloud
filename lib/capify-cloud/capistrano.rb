@@ -34,30 +34,30 @@ Capistrano::Configuration.instance(:must_exist).load do
     task :server_names do
       puts capify_cloud.server_names.sort
     end
-    
+
     desc "Allows ssh to instance by id. cap ssh <INSTANCE NAME>"
     task :ssh do
-      server = variables[:logger].instance_variable_get("@options")[:actions][1]
+      server = variables[:logger].instance_variable_get("@options")[:actions].last
       instance = numeric?(server) ? capify_cloud.desired_instances[server.to_i] : capify_cloud.get_instance_by_name(server)
-      port = ssh_options[:port] || 22 
+      port = ssh_options[:port] || 22
       command = "ssh -p #{port} #{user}@#{instance.contact_point}"
       puts "Running `#{command}`"
       exec(command)
     end
   end
-  
+
   namespace :deploy do
     before "deploy", "cloud:deregister_instance"
     after "deploy", "cloud:register_instance"
     after "deploy:rollback", "cloud:register_instance"
   end
-    
+
   def cloud_roles(*roles)
     server_name = variables[:logger].instance_variable_get("@options")[:actions].first unless variables[:logger].instance_variable_get("@options")[:actions][1].nil?
-    
+
     if !server_name.nil?
       named_instance = capify_cloud.get_instance_by_name(server_name)
-  
+
       task named_instance.name.to_sym do
         remove_default_roles
         server_address = named_instance.contact_point

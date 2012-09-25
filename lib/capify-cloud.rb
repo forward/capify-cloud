@@ -23,6 +23,7 @@ class CapifyCloud
     
     @instances = []
     @cloud_providers.each do |cloud_provider|
+      @cloud_config[cloud_provider.to_sym][:role_tag] ||= "Roles"
       config = @cloud_config[cloud_provider.to_sym]
       case cloud_provider
       when 'Brightbox'
@@ -52,9 +53,9 @@ class CapifyCloud
     desired_instances.each_with_index do |instance, i|
       puts sprintf "%02d:  %-40s  %-20s %-20s  %-20s  %-25s  %-20s  (%s)  (%s)",
         i, (instance.name || "").green, instance.provider.yellow, instance.id.red, instance.flavor_id.cyan,
-        instance.contact_point.blue, instance.zone_id.magenta, (instance.tags["Roles"] || "").yellow,
+        instance.contact_point.blue, instance.zone_id.magenta, (instance.tags[@cloud_config[instance.provider.to_sym][:role_tag]] || "").yellow,
         (instance.tags["Options"] || "").yellow
-      end
+    end
   end
 
   def server_names
@@ -70,7 +71,7 @@ class CapifyCloud
   end
  
   def get_instances_by_role(role)
-    desired_instances.select {|instance| instance.tags['Roles'].split(%r{,\s*}).include?(role.to_s) rescue false}
+    desired_instances.select {|instance| instance.tags[@cloud_config[instance.provider.to_sym][:role_tag]].split(%r{,\s*}).include?(role.to_s) rescue false }
   end
   
   def get_instances_by_region(roles, region)

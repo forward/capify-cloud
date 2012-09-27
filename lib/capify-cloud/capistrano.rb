@@ -1,13 +1,13 @@
 require File.join(File.dirname(__FILE__), '../capify-cloud')
 require 'colored'
 
-Capistrano::Configuration.instance(:must_exist).load do  
+Capistrano::Configuration.instance(:must_exist).load do
   def capify_cloud
     @capify_cloud ||= CapifyCloud.new(fetch(:cloud_config, 'config/cloud.yml'))
   end
 
   namespace :cloud do
-    
+
     desc "Prints out all cloud instances. index, name, instance_id, size, DNS/IP, region, tags"
     task :status do
       capify_cloud.display_instances
@@ -34,30 +34,31 @@ Capistrano::Configuration.instance(:must_exist).load do
     task :server_names do
       puts capify_cloud.server_names.sort
     end
-    
+
     desc "Allows ssh to instance by id. cap ssh <INSTANCE NAME>"
     task :ssh do
       server = variables[:logger].instance_variable_get("@options")[:actions][1]
       instance = numeric?(server) ? capify_cloud.desired_instances[server.to_i] : capify_cloud.get_instance_by_name(server)
-      port = ssh_options[:port] || 22 
+      port = ssh_options[:port] || 22
       command = "ssh -p #{port} #{user}@#{instance.contact_point}"
       puts "Running `#{command}`"
       exec(command)
     end
   end
-  
+
   namespace :deploy do
     before "deploy", "cloud:deregister_instance"
     after "deploy", "cloud:register_instance"
     after "deploy:rollback", "cloud:register_instance"
   end
-    
+
   def cloud_roles(*roles)
-    server_name = variables[:logger].instance_variable_get("@options")[:actions].first unless variables[:logger].instance_variable_get("@options")[:actions][1].nil?
-    
+    logger_options = variables[:logger].instance_variable_get("@options")[:actions] || [] #Guard for :actions being nil, to work with sprinkle gem
+    server_name = logger_options.first unless logger_options[1].nil?
+
     if !server_name.nil?
       named_instance = capify_cloud.get_instance_by_name(server_name)
-  
+
       task named_instance.name.to_sym do
         remove_default_roles
         server_address = named_instance.contact_point
@@ -68,26 +69,26 @@ Capistrano::Configuration.instance(:must_exist).load do
     end
     roles.each {|role| cloud_role(role)}
   end
-  
+
   def cloud_role(role_name_or_hash)
     role = role_name_or_hash.is_a?(Hash) ? role_name_or_hash : {:name => role_name_or_hash,:options => {}}
     @roles[role[:name]]
-    
+
     instances = capify_cloud.get_instances_by_role(role[:name])
     if role[:options].delete(:default)
       instances.each do |instance|
         define_role(role, instance)
       end
-    end    
+    end
     regions = capify_cloud.determine_regions
     regions.each do |region|
       define_regions(region, role)
     end unless regions.nil?
 
     define_role_roles(role, instances)
-    define_instance_roles(role, instances)    
+    define_instance_roles(role, instances)
 
-  end  
+  end
 
   def define_regions(region, role)
     instances = []
@@ -118,7 +119,7 @@ Capistrano::Configuration.instance(:must_exist).load do
       instances.each do |instance|
         define_role(role, instance)
       end
-    end 
+    end
   end
 
   def define_role(role, instance)
@@ -126,21 +127,21 @@ Capistrano::Configuration.instance(:must_exist).load do
     new_options = {}
     options.each {|key, value| new_options[key] = true if value.to_s == instance.name}
     instance.tags["Options"].split(%r{,\s*}).each { |option| new_options[option.to_sym] = true} rescue false
-    
+
     if new_options
-      role role[:name].to_sym, instance.contact_point, new_options 
+      role role[:name].to_sym, instance.contact_point, new_options
     else
       role role[:name].to_sym, instance.contact_point
     end
   end
-  
+
   def numeric?(object)
     true if Float(object) rescue false
   end
-  
-  def remove_default_roles	 	
+
+  def remove_default_roles
     roles.reject! { true }
   end
-  
+
 
 end
